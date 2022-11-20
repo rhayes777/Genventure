@@ -7,8 +7,6 @@ from image import PlayerImage, BackgroundImage
 
 logging.basicConfig(level=logging.INFO)
 
-WHITE = (255, 255, 255)
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, image_path):
