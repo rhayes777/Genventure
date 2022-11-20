@@ -34,7 +34,12 @@ class Image:
 
     @property
     def size(self):
-        return f"{self.width}x{self.height}"
+        biggest = max(self.width, self.height)
+        if biggest > 512:
+            return '1024x1024'
+        if biggest > 256:
+            return '512x512'
+        return '256x256'
 
     @property
     def image_url(self):
