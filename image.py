@@ -5,6 +5,8 @@ from functools import cached_property
 from os import environ
 from pathlib import Path
 
+from PIL import Image as PILImage
+
 import openai
 import requests
 
@@ -27,19 +29,23 @@ class Image:
         response = openai.Image.create(
             prompt=self.prompt,
             n=1,
-            size=self.size,
+            size=self.requested_size,
         )
         self.logger.info("Query complete")
         return response
 
     @property
-    def size(self):
+    def requested_size(self):
         biggest = max(self.width, self.height)
         if biggest > 512:
             return '1024x1024'
         if biggest > 256:
             return '512x512'
         return '256x256'
+
+    @property
+    def shape(self):
+        return self.width, self.height
 
     @property
     def image_url(self):
@@ -59,4 +65,9 @@ class Image:
         with open(self.image_path, 'wb') as f:
             response.raw.decode_content = True
             shutil.copyfileobj(response.raw, f)
-        self.logger.info("Download complete")
+        self.logger.info("Download complete. Resizing...")
+
+        image = PILImage.open(self.image_path)
+
+        sunset_resized = image.resize(self.shape)
+        sunset_resized.save(self.image_path)
