@@ -3,13 +3,17 @@ from pygame.locals import *
 
 from image import Image
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, image_path):
         super().__init__()
         self.image = pygame.image.load(image_path)
         self.rect = self.image.get_rect()
-        self.rect.center = (160, 520)
+        self.rect.center = (320, 200)
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -41,8 +45,10 @@ class Game:
         image = Image(
             prompt="Pixel art of a horse",
         )
-        image.download()
-        self.player = Player(image_path=image.image_path)
+        if not image.exists():
+            image.download()
+
+        self.player = Player(image_path=str(image.image_path))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:

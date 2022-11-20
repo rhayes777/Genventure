@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from functools import cached_property
@@ -14,18 +15,22 @@ openai.api_key = environ["API_KEY"]
 
 
 class Image:
-    def __init__(self, prompt, width=1024, height=1024,):
+    def __init__(self, prompt, width=1024, height=1024, ):
         self.prompt = prompt
         self.width = width
         self.height = height
+        self.logger = logging.getLogger(prompt)
 
     @cached_property
     def query_response(self):
-        return openai.Image.create(
+        self.logger.info("Querying API...")
+        response = openai.Image.create(
             prompt=self.prompt,
             n=1,
             size=self.size,
         )
+        self.logger.info("Query complete")
+        return response
 
     @property
     def size(self):
@@ -43,8 +48,10 @@ class Image:
         return (IMAGE_DIRECTORY / self.prompt).with_suffix(".png")
 
     def download(self):
+        self.logger.info("Downloading...")
         response = requests.get(self.image_url, stream=True)
         response.raise_for_status()
         with open(self.image_path, 'wb') as f:
             response.raw.decode_content = True
             shutil.copyfileobj(response.raw, f)
+        self.logger.info("Download complete")
