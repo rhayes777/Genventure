@@ -48,26 +48,27 @@ class Image:
         return self.width, self.height
 
     @property
-    def image_url(self):
+    def url(self):
         return self.query_response['data'][0]['url']
 
     def exists(self):
-        return self.image_path.exists()
+        return self.path.exists()
 
     @property
-    def image_path(self):
+    def path(self):
         return (IMAGE_DIRECTORY / self.prompt).with_suffix(".png")
 
     def download(self):
+        url = self.url
         self.logger.info("Downloading...")
-        response = requests.get(self.image_url, stream=True)
+        response = requests.get(url, stream=True)
         response.raise_for_status()
-        with open(self.image_path, 'wb') as f:
+        with open(self.path, 'wb') as f:
             response.raw.decode_content = True
             shutil.copyfileobj(response.raw, f)
         self.logger.info("Download complete. Resizing...")
 
-        image = PILImage.open(self.image_path)
+        image = PILImage.open(self.path)
 
         sunset_resized = image.resize(self.shape)
-        sunset_resized.save(self.image_path)
+        sunset_resized.save(self.path)

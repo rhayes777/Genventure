@@ -1,12 +1,11 @@
+import logging
+
 import pygame
 from pygame.locals import *
 
 from image import Image
 
-import logging
-
 logging.basicConfig(level=logging.INFO)
-
 
 WHITE = (255, 255, 255)
 
@@ -37,23 +36,37 @@ class Game:
     def __init__(self):
         self._running = True
         self._surface = None
-        self.size = self.weight, self.height = 640, 400
+        self.width, self.height = 640, 640
         self.clock = pygame.time.Clock()
         self.player = None
 
-    def on_init(self):
-        pygame.init()
-        self._surface = pygame.display.set_mode(self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
-        self._running = True
-        image = Image(
+        self.player_image = Image(
             prompt="Pixel art of a horse",
             width=32,
             height=32,
         )
-        if not image.exists():
-            image.download()
+        if not self.player_image.exists():
+            self.player_image.download()
 
-        self.player = Player(image_path=str(image.image_path))
+        self.background_image = Image(
+            prompt="Video game background art of fields",
+            width=self.width,
+            height=self.height,
+        )
+        if not self.background_image.exists():
+            self.background_image.download()
+
+        self.background = pygame.image.load(self.background_image.path)
+
+    @property
+    def shape(self):
+        return self.width, self.height
+
+    def on_init(self):
+        pygame.init()
+        self._surface = pygame.display.set_mode(self.shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
+        self._running = True
+        self.player = Player(image_path=str(self.player_image.path))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -63,7 +76,7 @@ class Game:
         self.player.update()
 
     def on_render(self):
-        self._surface.fill(WHITE)
+        self._surface.blit(self.background, (0, 0))
         self.player.draw(self._surface)
         pygame.display.update()
 
