@@ -44,8 +44,8 @@ class Game:
         self._running = True
         image = Image(
             prompt="Pixel art of a horse",
-            width=256,
-            height=256,
+            width=32,
+            height=32,
         )
         if not image.exists():
             image.download()
