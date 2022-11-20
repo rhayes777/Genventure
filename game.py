@@ -11,9 +11,16 @@ logging.basicConfig(level=logging.INFO)
 class Player(pygame.sprite.Sprite):
     def __init__(self, image_path):
         super().__init__()
-        self.image = pygame.image.load(image_path)
+        self.is_left = True
+
+        self.left_image = pygame.image.load(image_path)
+        self.right_image = pygame.transform.flip(self.left_image.copy(), True, False,)
         self.rect = self.image.get_rect()
         self.rect.center = (320, 200)
+
+    @property
+    def image(self):
+        return self.left_image if self.is_left else self.right_image
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -23,8 +30,10 @@ class Player(pygame.sprite.Sprite):
             self.rect.move_ip(0, 5)
         if pressed_keys[K_LEFT]:
             self.rect.move_ip(-5, 0)
+            self.is_left = True
         if pressed_keys[K_RIGHT]:
             self.rect.move_ip(5, 0)
+            self.is_left = False
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
