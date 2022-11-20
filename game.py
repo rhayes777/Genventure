@@ -61,6 +61,7 @@ class Game:
 
     def on_render(self):
         self.player.draw(self._surface)
+        pygame.display.update()
 
     def on_cleanup(self):
         self.player = None
