@@ -48,9 +48,3 @@ class Image:
         with open(self.image_path, 'wb') as f:
             response.raw.decode_content = True
             shutil.copyfileobj(response.raw, f)
-
-
-image = Image(
-    prompt="Pixel art of a horse",
-)
-image.download()
