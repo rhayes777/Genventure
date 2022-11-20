@@ -3,7 +3,7 @@ import logging
 import pygame
 from pygame.locals import *
 
-from image import Image
+from image import PlayerImage, BackgroundImage
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,16 +40,12 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = None
 
-        self.player_image = Image(
-            prompt="Pixel art of a horse",
-            width=32,
-            height=32,
-        )
+        self.player_image = PlayerImage("horse")
         if not self.player_image.exists():
             self.player_image.download()
 
-        self.background_image = Image(
-            prompt="Video game background art of fields",
+        self.background_image = BackgroundImage(
+            noun="fields",
             width=self.width,
             height=self.height,
         )

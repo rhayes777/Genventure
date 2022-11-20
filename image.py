@@ -17,10 +17,11 @@ openai.api_key = environ["API_KEY"]
 
 
 class Image:
-    def __init__(self, prompt, width=1024, height=1024, ):
+    def __init__(self, prompt, width=1024, height=1024, transparent_background=False, ):
         self.prompt = prompt
         self.width = width
         self.height = height
+        self.transparent_background = transparent_background
         self.logger = logging.getLogger(prompt)
 
     @cached_property
@@ -73,18 +74,34 @@ class Image:
         sunset_resized = image.resize(self.shape)
         sunset_resized.save(self.path)
 
+        if self.transparent_background:
+            self.logger.info("Removing background...")
+            filename = str(self.path)
 
-class SpriteImage(Image):
-    def download(self):
-        super().download()
+            src = cv2.imread(filename, 1)
+            tmp = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
+            _, alpha = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY)
+            b, g, r = cv2.split(src)
+            rgba = [b, g, r, alpha]
+            dst = cv2.merge(rgba, 4)
+            cv2.imwrite(filename, dst)
 
-        self.logger.info("Removing background...")
-        filename = str(self.path)
 
-        src = cv2.imread(filename, 1)
-        tmp = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-        _, alpha = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY)
-        b, g, r = cv2.split(src)
-        rgba = [b, g, r, alpha]
-        dst = cv2.merge(rgba, 4)
-        cv2.imwrite(filename, dst)
+class PlayerImage(Image):
+    def __init__(self, noun, width=32, height=32, transparent_background=True, ):
+        super().__init__(
+            f"Pixel art of a {noun} facing right",
+            width=width,
+            height=height,
+            transparent_background=transparent_background,
+        )
+
+
+class BackgroundImage(Image):
+    def __init__(self, noun, width, height, transparent_background=False, ):
+        super().__init__(
+            f"Isometric video game background of {noun}",
+            width=width,
+            height=height,
+            transparent_background=transparent_background,
+        )
