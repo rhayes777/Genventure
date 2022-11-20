@@ -8,8 +8,8 @@ import openai
 import requests
 
 IMAGE_DIRECTORY = Path(environ["IMAGE_DIRECTORY"])
-
 os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
+
 openai.api_key = environ["API_KEY"]
 
 
