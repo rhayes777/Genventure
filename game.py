@@ -8,6 +8,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
+WHITE = (255, 255, 255)
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, image_path):
         super().__init__()
@@ -60,6 +63,7 @@ class Game:
         self.player.update()
 
     def on_render(self):
+        self._surface.fill(WHITE)
         self.player.draw(self._surface)
         pygame.display.update()
 
