@@ -56,3 +56,16 @@ def test_neighbors(image, world):
 )
 def test_tile_index(world, position, index):
     assert world.index(position) == index
+
+
+@pytest.mark.parametrize(
+    "position, tile_coordinates",
+    [
+        ((0, 0), (0, 0)),
+        ((10, 30), (10, 30)),
+        ((-10, -30), (90, 170)),
+        ((250, 250), (50, 50)),
+    ]
+)
+def test_tile_coordinate(world, position, tile_coordinates):
+    assert world.tile_coordinate(position) == tile_coordinates

@@ -40,3 +40,6 @@ class World:
 
     def index(self, position):
         return math.floor(position[0] / self.tile_shape[0]), math.floor(position[1] / self.tile_shape[1])
+
+    def tile_coordinate(self, position):
+        return position[0] % self.tile_shape[0], position[1] % self.tile_shape[1]
