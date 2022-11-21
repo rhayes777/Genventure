@@ -4,6 +4,7 @@ import pygame
 from pygame.locals import *
 
 from genventure.image import PlayerImage, BackgroundImage
+from genventure.world import World
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,14 +16,20 @@ height = info.current_h
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, image_path):
+    def __init__(self, image_path, world):
         super().__init__()
         self.is_left = True
 
         self.left_image = pygame.image.load(image_path)
         self.right_image = pygame.transform.flip(self.left_image.copy(), True, False, )
         self.rect = self.image.get_rect()
-        self.rect.center = (320, 200)
+        self.position = [320, 200]
+
+        self.world = world
+
+    @property
+    def tile(self):
+        return self.world.tile_for_position(self.position)
 
     @property
     def image(self):
@@ -31,17 +38,18 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[K_UP] or pressed_keys[K_w]:
-            self.rect.move_ip(0, -5)
+            self.position[1] -= 5
         if pressed_keys[K_DOWN] or pressed_keys[K_s]:
-            self.rect.move_ip(0, 5)
+            self.position[1] += 5
         if pressed_keys[K_LEFT] or pressed_keys[K_a]:
-            self.rect.move_ip(-5, 0)
+            self.position[0] -= 5
             self.is_left = True
         if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
-            self.rect.move_ip(5, 0)
+            self.position[0] += 5
             self.is_left = False
 
     def draw(self, surface):
+        self.rect.center = self.world.tile_coordinate(self.position)
         surface.blit(self.image, self.rect)
 
 
@@ -67,7 +75,6 @@ class Game:
         if not self.background_image.exists():
             self.background_image.download()
 
-        self.background = pygame.image.load(self.background_image.path)
 
     @property
     def shape(self):
@@ -76,7 +83,7 @@ class Game:
     def on_init(self):
         self._surface = pygame.display.set_mode(self.shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
-        self.player = Player(image_path=str(self.player_image.path))
+        self.player = Player(image_path=str(self.player_image.path), world=World(self.background_image, tile_shape=self.shape))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -86,7 +93,10 @@ class Game:
         self.player.update()
 
     def on_render(self):
-        self._surface.blit(self.background, (0, 0))
+        background = pygame.image.load(
+            self.player.tile.image.path
+        )
+        self._surface.blit(background, (0, 0))
         self.player.draw(self._surface)
         pygame.display.update()
 

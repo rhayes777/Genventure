@@ -43,3 +43,6 @@ class World:
 
     def tile_coordinate(self, position):
         return position[0] % self.tile_shape[0], position[1] % self.tile_shape[1]
+
+    def tile_for_position(self, position):
+        return self[self.index(position)]
