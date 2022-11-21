@@ -43,3 +43,15 @@ def test_neighbors(image, world):
     assert tile.image != image
     assert tile.image == world[1, 1].image
     assert tile.image != world[-1, -1].image
+
+
+@pytest.mark.parametrize(
+    "position, index",
+    [
+        ((0, 0), (0, 0)),
+        ((10, 30), (0, 0)),
+        ((-10, -30), (-1, -1)),
+    ]
+)
+def test_tile_index(world, position, index):
+    assert world.index(position) == index

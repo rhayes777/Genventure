@@ -1,3 +1,4 @@
+import math
 from threading import Thread
 
 
@@ -36,3 +37,6 @@ class World:
         background_thread = Thread(target=self.add_missing_tiles, args=(item,))
         background_thread.start()
         return self._tile_cache[item]
+
+    def index(self, position):
+        return math.floor(position[0] / self.tile_shape[0]), math.floor(position[1] / self.tile_shape[1])
