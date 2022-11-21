@@ -1,15 +1,18 @@
 import logging
 import os
 import shutil
+import uuid
+from abc import abstractmethod, ABC
 from functools import cached_property
 from os import environ
 from pathlib import Path
-from PIL import Image as PILImage
+from typing import List
 
 import cv2
 import numpy as np
 import openai
 import requests
+from PIL import Image as PILImage
 
 IMAGE_DIRECTORY = Path(environ["IMAGE_DIRECTORY"])
 os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
@@ -17,24 +20,15 @@ os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
 openai.api_key = environ["API_KEY"]
 
 
-class Image:
-    def __init__(self, prompt, width=1024, height=1024, transparent_background=False, ):
-        self.prompt = prompt
+class AbstractImage(ABC):
+    def __init__(self, name, width=1024, height=1024, transparent_background=False, ):
+        self.name = name
+
         self.width = width
         self.height = height
         self.transparent_background = transparent_background
-        self.logger = logging.getLogger(prompt)
 
-    @cached_property
-    def query_response(self):
-        self.logger.info("Querying API...")
-        response = openai.Image.create(
-            prompt=self.prompt,
-            n=1,
-            size=self.requested_size,
-        )
-        self.logger.info("Query complete")
-        return response
+        self.logger = logging.getLogger(name)
 
     @property
     def requested_size(self):
@@ -50,16 +44,18 @@ class Image:
         return self.width, self.height
 
     @property
+    @abstractmethod
     def url(self):
-        return self.query_response['data'][0]['url']
+        pass
 
     def exists(self):
         return self.path.exists()
 
     @property
     def path(self):
-        return (IMAGE_DIRECTORY / self.prompt).with_suffix(".png")
+        return (IMAGE_DIRECTORY / self.name).with_suffix(".png")
 
+    # noinspection PyUnresolvedReferences
     def download(self):
         url = self.url
         self.logger.info("Downloading...")
@@ -96,6 +92,73 @@ class Image:
             cv2.imwrite(filename, dst)
 
 
+class Image(AbstractImage):
+    def __init__(self, prompt, width=1024, height=1024, transparent_background=False, ):
+        super().__init__(
+            name=prompt,
+            width=width,
+            height=height,
+            transparent_background=transparent_background,
+        )
+        self.prompt = prompt
+
+    @cached_property
+    def query_response(self):
+        self.logger.info("Querying API...")
+        response = openai.Image.create(
+            prompt=self.prompt,
+            n=1,
+            size=self.requested_size,
+        )
+        self.logger.info("Query complete")
+        return response
+
+    @property
+    def url(self):
+        return self.query_response['data'][0]['url']
+
+    def variations(self, n: int = 1) -> List["URLImage"]:
+        with open(self.path, "rb") as f:
+            response = openai.Image.create_variation(
+                image=f,
+                n=n,
+                size=self.requested_size,
+            )
+        return [
+            URLImage(
+                name=f"{self.name}_{str(uuid.uuid4())[:8]}",
+                url=response_dict['url'],
+                width=self.width,
+                height=self.height,
+                transparent_background=self.transparent_background,
+            )
+            for response_dict in response['data']
+        ]
+
+
+class URLImage(AbstractImage):
+    def __init__(self, name, url, width=1024, height=1024, transparent_background=False, ):
+        super().__init__(
+            name=name,
+            width=width,
+            height=height,
+            transparent_background=transparent_background,
+        )
+        self._url = url
+
+    @property
+    def url(self):
+        return self._url
+
+
+# response = openai.Image.create_variation(
+#     image=open("corgi_and_cat_paw.png", "rb"),
+#     n=1,
+#     size="1024x1024"
+# )
+# image_url = response['data'][0]['url']
+
+
 class PlayerImage(Image):
     def __init__(self, noun, width=32, height=32, transparent_background=True, ):
         super().__init__(
@@ -114,3 +177,9 @@ class BackgroundImage(Image):
             height=height,
             transparent_background=transparent_background,
         )
+
+
+if __name__ == "__main__":
+    image = PlayerImage("witch")
+    variation, = image.variations()
+    variation.download()
