@@ -3,7 +3,7 @@ import logging
 import pygame
 from pygame.locals import *
 
-from image import PlayerImage, BackgroundImage
+from genventure.image import PlayerImage, BackgroundImage
 
 logging.basicConfig(level=logging.INFO)
 

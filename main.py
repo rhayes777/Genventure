@@ -1,5 +1,5 @@
-from game import Game
-from input import text_input
+from genventure.game import Game
+from genventure.input import text_input
 
 
 class Orchestrator:

@@ -1,8 +1,6 @@
 import pygame
 import pygame_textinput
 
-from game import Game
-
 pygame.init()
 
 
