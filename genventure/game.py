@@ -8,6 +8,10 @@ from genventure.image import PlayerImage, BackgroundImage
 logging.basicConfig(level=logging.INFO)
 
 pygame.init()
+info = pygame.display.Info()
+
+width = info.current_w
+height = info.current_h
 
 
 class Player(pygame.sprite.Sprite):
@@ -46,10 +50,8 @@ class Game:
         self._running = True
         self._surface = None
 
-        info = pygame.display.Info()
-
-        self.width = info.current_w
-        self.height = info.current_h
+        self.width = width
+        self.height = height
         self.clock = pygame.time.Clock()
         self.player = None
 
