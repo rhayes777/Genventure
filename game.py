@@ -47,12 +47,12 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = None
 
-        self.player_image = PlayerImage("horse")
+        self.player_image = PlayerImage("poisonous frog")
         if not self.player_image.exists():
             self.player_image.download()
 
         self.background_image = BackgroundImage(
-            noun="fields",
+            noun="tree",
             width=self.width,
             height=self.height,
         )
