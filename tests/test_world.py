@@ -51,6 +51,7 @@ def test_neighbors(image, world):
         ((0, 0), (0, 0)),
         ((10, 30), (0, 0)),
         ((-10, -30), (-1, -1)),
+        ((250, 250), (2, 1)),
     ]
 )
 def test_tile_index(world, position, index):
