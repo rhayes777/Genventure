@@ -21,14 +21,17 @@ openai.api_key = environ["API_KEY"]
 
 
 class AbstractImage(ABC):
-    def __init__(self, name, width=1024, height=1024, transparent_background=False, ):
-        self.name = name
-
+    def __init__(self, width=1024, height=1024, transparent_background=False, ):
         self.width = width
         self.height = height
         self.transparent_background = transparent_background
 
-        self.logger = logging.getLogger(name)
+        self.logger = logging.getLogger(self.name)
+
+    @property
+    @abstractmethod
+    def name(self):
+        pass
 
     @property
     def requested_size(self):
@@ -94,13 +97,16 @@ class AbstractImage(ABC):
 
 class Image(AbstractImage):
     def __init__(self, prompt, width=1024, height=1024, transparent_background=False, ):
+        self.prompt = prompt
         super().__init__(
-            name=prompt,
             width=width,
             height=height,
             transparent_background=transparent_background,
         )
-        self.prompt = prompt
+
+    @property
+    def name(self):
+        return self.prompt
 
     @cached_property
     def query_response(self):
@@ -117,34 +123,54 @@ class Image(AbstractImage):
     def url(self):
         return self.query_response['data'][0]['url']
 
-    def variations(self, n: int = 1) -> List["URLImage"]:
-        with open(self.path, "rb") as f:
-            response = openai.Image.create_variation(
-                image=f,
-                n=n,
-                size=self.requested_size,
-            )
-        return [
-            URLImage(
-                name=f"{self.name}_{str(uuid.uuid4())[:8]}",
-                url=response_dict['url'],
-                width=self.width,
-                height=self.height,
-                transparent_background=self.transparent_background,
-            )
-            for response_dict in response['data']
-        ]
+    def variations(self, n: int = 1) -> List["Variation"]:
+        return [Variation(self) for _ in range(n)]
+        # with open(self.path, "rb") as f:
+        #     response = openai.Image.create_variation(
+        #         image=f,
+        #         n=n,
+        #         size=self.requested_size,
+        #     )
+        # return [
+        #     URLImage(
+        #         name=f"{self.name}_{str(uuid.uuid4())[:8]}",
+        #         url=response_dict['url'],
+        #         width=self.width,
+        #         height=self.height,
+        #         transparent_background=self.transparent_background,
+        #     )
+        #     for response_dict in response['data']
+        # ]
+
+
+class Variation(Image):
+    def __init__(self, image):
+        self.image = image
+        super().__init__(
+            prompt=image.prompt,
+            width=image.width,
+            height=image.height,
+            transparent_background=image.transparent_background,
+        )
+
+    @cached_property
+    def name(self):
+        return f"{self.image.name}_{str(uuid.uuid4())[:8]}"
 
 
 class URLImage(AbstractImage):
     def __init__(self, name, url, width=1024, height=1024, transparent_background=False, ):
         super().__init__(
-            name=name,
             width=width,
             height=height,
             transparent_background=transparent_background,
         )
         self._url = url
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def url(self):
@@ -180,6 +206,6 @@ class BackgroundImage(Image):
 
 
 if __name__ == "__main__":
-    image = PlayerImage("witch")
+    image = BackgroundImage("volcano", 1024, 1024)
     variation, = image.variations()
     variation.download()
