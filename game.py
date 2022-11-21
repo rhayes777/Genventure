@@ -40,19 +40,19 @@ class Player(pygame.sprite.Sprite):
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, player_prompt, background_prompt):
         self._running = True
         self._surface = None
         self.width, self.height = 640, 640
         self.clock = pygame.time.Clock()
         self.player = None
 
-        self.player_image = PlayerImage("poisonous frog")
+        self.player_image = PlayerImage(player_prompt)
         if not self.player_image.exists():
             self.player_image.download()
 
         self.background_image = BackgroundImage(
-            noun="tree",
+            noun=background_prompt,
             width=self.width,
             height=self.height,
         )
