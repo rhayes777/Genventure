@@ -30,14 +30,14 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
-        if pressed_keys[K_UP]:
+        if pressed_keys[K_UP] or pressed_keys[K_w]:
             self.rect.move_ip(0, -5)
-        if pressed_keys[K_DOWN]:
+        if pressed_keys[K_DOWN] or pressed_keys[K_s]:
             self.rect.move_ip(0, 5)
-        if pressed_keys[K_LEFT]:
+        if pressed_keys[K_LEFT] or pressed_keys[K_a]:
             self.rect.move_ip(-5, 0)
             self.is_left = True
-        if pressed_keys[K_RIGHT]:
+        if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
             self.rect.move_ip(5, 0)
             self.is_left = False
 
