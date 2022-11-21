@@ -109,7 +109,7 @@ class PlayerImage(Image):
 class BackgroundImage(Image):
     def __init__(self, noun, width, height, transparent_background=False, ):
         super().__init__(
-            f"Isometric video game background of {noun}",
+            f"beautiful top down view video game art of {noun}",
             width=width,
             height=height,
             transparent_background=transparent_background,

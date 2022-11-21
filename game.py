@@ -7,6 +7,8 @@ from image import PlayerImage, BackgroundImage
 
 logging.basicConfig(level=logging.INFO)
 
+pygame.init()
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, image_path):
@@ -14,7 +16,7 @@ class Player(pygame.sprite.Sprite):
         self.is_left = True
 
         self.left_image = pygame.image.load(image_path)
-        self.right_image = pygame.transform.flip(self.left_image.copy(), True, False,)
+        self.right_image = pygame.transform.flip(self.left_image.copy(), True, False, )
         self.rect = self.image.get_rect()
         self.rect.center = (320, 200)
 
@@ -43,7 +45,11 @@ class Game:
     def __init__(self, player_prompt, background_prompt):
         self._running = True
         self._surface = None
-        self.width, self.height = 640, 640
+
+        info = pygame.display.Info()
+
+        self.width = info.current_w
+        self.height = info.current_h
         self.clock = pygame.time.Clock()
         self.player = None
 
@@ -66,7 +72,6 @@ class Game:
         return self.width, self.height
 
     def on_init(self):
-        pygame.init()
         self._surface = pygame.display.set_mode(self.shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
         self.player = Player(image_path=str(self.player_image.path))
@@ -102,5 +107,8 @@ class Game:
 
 
 if __name__ == "__main__":
-    app = Game()
+    app = Game(
+        player_prompt="queen",
+        background_prompt="heaven",
+    )
     app.on_execute()
