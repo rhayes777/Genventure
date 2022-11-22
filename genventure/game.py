@@ -93,6 +93,9 @@ class Game:
                 self.player.tile.image.path
             )
             self._surface.blit(background, (0, 0))
+        else:
+            self._surface.fill((255, 255, 255))
+
         self.player.draw(self._surface)
         pygame.display.update()
 
