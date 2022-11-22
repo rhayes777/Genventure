@@ -1,7 +1,7 @@
 import math
 from threading import Thread
 
-from genventure.image import make_background_images
+from genventure.image import make_background_images, LocalImage, background_prompt
 
 
 class Tile:
@@ -18,7 +18,6 @@ class World:
         self.add_missing_tiles(item=(0, 0))
 
     def add_missing_tiles(self, item):
-
         coordinates = [
             (item[0] + x, item[1] + y)
             for x in range(-1, 2)
@@ -29,14 +28,27 @@ class World:
             for coordinate_pair in coordinates
             if coordinate_pair not in self._tile_cache
         ]
+        for coordinate_pair in missing_coordinates:
+            self._tile_cache[coordinate_pair] = None
 
-        n = len(missing_coordinates)
+        to_generate = []
+
+        for coordinate_pair in missing_coordinates:
+            name = f"{background_prompt(self.background_prompt)}_{'_'.join(map(str, coordinate_pair))}"
+            image = LocalImage(name)
+            if image.exists():
+                self._tile_cache[coordinate_pair] = image
+            else:
+                to_generate.append((name, coordinate_pair))
+            self._tile_cache[coordinate_pair] = Tile(image)
+
+        n = len(to_generate)
 
         if n > 0:
             images = make_background_images(noun=self.background_prompt, width=self.tile_shape[0],
                                             height=self.tile_shape[1], n=n)
-            for coordinate_pair, image in zip(missing_coordinates, images):
-                image.name = f"{image.name}_{'_'.join(map(str, coordinate_pair))}"
+            for (name, coordinate_pair), image in zip(to_generate, images):
+                image.name = name
                 image.download()
                 self._tile_cache[coordinate_pair] = Tile(image)
 

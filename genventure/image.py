@@ -40,12 +40,13 @@ class ImageShape:
         return '256x256'
 
 
-class Image:
-    def __init__(self, name, url, shape, transparent_background=False, ):
-        self.shape = shape
-        self.url = url
+class LocalImage:
+    def __init__(self, name):
         self.name = name
-        self.transparent_background = transparent_background
+
+    @property
+    def path(self):
+        return (IMAGE_DIRECTORY / self.name).with_suffix(".png")
 
     @property
     def logger(self):
@@ -54,9 +55,14 @@ class Image:
     def exists(self):
         return self.path.exists()
 
-    @property
-    def path(self):
-        return (IMAGE_DIRECTORY / self.name).with_suffix(".png")
+
+class Image(LocalImage):
+    def __init__(self, name, url, shape, transparent_background=False, ):
+        super().__init__(name)
+        self.shape = shape
+        self.url = url
+        self.name = name
+        self.transparent_background = transparent_background
 
     # noinspection PyUnresolvedReferences
     def download(self):
@@ -95,7 +101,7 @@ class Image:
             cv2.imwrite(filename, dst)
 
     @classmethod
-    def for_prompt(cls, prompt, shape=None, n=1, transparent_background=False):
+    def for_prompt(cls, prompt, shape=None, n=1, transparent_background=False, name=None):
         shape = shape or ImageShape(width=1024, height=1024)
         logger = logging.getLogger(prompt)
         logger.info("Querying API...")
@@ -107,7 +113,7 @@ class Image:
         logger.info("Query complete")
         return [
             Image(
-                name=prompt,
+                name=name or prompt,
                 url=data["url"],
                 shape=shape,
                 transparent_background=transparent_background
@@ -138,10 +144,15 @@ def make_player_image(noun):
                             shape=ImageShape(32, 32), transparent_background=True)[0]
 
 
-def make_background_images(noun, width, height, n=1):
+def background_prompt(noun):
+    return f"beautiful top down view video game art of {noun}"
+
+
+def make_background_images(noun, width, height, n=1, name=None):
     return Image.for_prompt(
-        prompt=f"beautiful top down view video game art of {noun}",
+        prompt=background_prompt(noun),
         shape=ImageShape(width, height),
         transparent_background=False,
         n=n,
+        name=name,
     )
