@@ -2,8 +2,6 @@ import logging
 import os
 import shutil
 import uuid
-from abc import abstractmethod, ABC
-from functools import cached_property
 from os import environ
 from pathlib import Path
 from typing import List
@@ -20,18 +18,17 @@ os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
 openai.api_key = environ["API_KEY"]
 
 
-class AbstractImage(ABC):
-    def __init__(self, width=1024, height=1024, transparent_background=False, ):
+class ImageShape:
+    def __init__(self, width=1024, height=1024):
         self.width = width
         self.height = height
-        self.transparent_background = transparent_background
-
-        self.logger = logging.getLogger(self.name)
 
     @property
-    @abstractmethod
-    def name(self):
-        pass
+    def shape(self):
+        return self.width, self.height
+
+    def __iter__(self):
+        return iter((self.width, self.height))
 
     @property
     def requested_size(self):
@@ -42,14 +39,17 @@ class AbstractImage(ABC):
             return '512x512'
         return '256x256'
 
-    @property
-    def shape(self):
-        return self.width, self.height
+
+class Image:
+    def __init__(self, name, url, shape, transparent_background=False, ):
+        self.shape = shape
+        self.url = url
+        self.name = name
+        self.transparent_background = transparent_background
 
     @property
-    @abstractmethod
-    def url(self):
-        pass
+    def logger(self):
+        return logging.getLogger(self.name)
 
     def exists(self):
         return self.path.exists()
@@ -94,118 +94,54 @@ class AbstractImage(ABC):
             dst = cv2.merge(rgba, 4)
             cv2.imwrite(filename, dst)
 
-
-class Image(AbstractImage):
-    def __init__(self, prompt, width=1024, height=1024, transparent_background=False, ):
-        self.prompt = prompt
-        super().__init__(
-            width=width,
-            height=height,
-            transparent_background=transparent_background,
-        )
-
-    @property
-    def name(self):
-        return self.prompt
-
-    @cached_property
-    def query_response(self):
-        self.logger.info("Querying API...")
+    @classmethod
+    def for_prompt(cls, prompt, shape=None, n=1, transparent_background=False):
+        shape = shape or ImageShape(width=1024, height=1024)
+        logger = logging.getLogger(prompt)
+        logger.info("Querying API...")
         response = openai.Image.create(
-            prompt=self.prompt,
-            n=1,
-            size=self.requested_size,
+            prompt=prompt,
+            n=n,
+            size=shape.requested_size,
         )
-        self.logger.info("Query complete")
-        return response
+        logger.info("Query complete")
+        return [
+            Image(
+                name=prompt,
+                url=data["url"],
+                shape=shape,
+                transparent_background=transparent_background
+            )
+            for data in response["data"]
+        ]
 
-    @property
-    def url(self):
-        return self.query_response['data'][0]['url']
-
-    def variations(self, n: int = 1) -> List["Variation"]:
-        return [Variation(self) for _ in range(n)]
-        # with open(self.path, "rb") as f:
-        #     response = openai.Image.create_variation(
-        #         image=f,
-        #         n=n,
-        #         size=self.requested_size,
-        #     )
-        # return [
-        #     URLImage(
-        #         name=f"{self.name}_{str(uuid.uuid4())[:8]}",
-        #         url=response_dict['url'],
-        #         width=self.width,
-        #         height=self.height,
-        #         transparent_background=self.transparent_background,
-        #     )
-        #     for response_dict in response['data']
-        # ]
-
-
-class Variation(Image):
-    def __init__(self, image):
-        self.image = image
-        super().__init__(
-            prompt=image.prompt,
-            width=image.width,
-            height=image.height,
-            transparent_background=image.transparent_background,
-        )
-
-    @cached_property
-    def name(self):
-        return f"{self.image.name}_{str(uuid.uuid4())[:8]}"
+    def variations(self, n: int = 1) -> List["Image"]:
+        with open(self.path, "rb") as f:
+            response = openai.Image.create_variation(
+                image=f,
+                n=n,
+                size=self.shape.requested_size,
+            )
+        return [
+            Image(
+                name=f"{self.name}_{str(uuid.uuid4())[:8]}",
+                url=response_dict['url'],
+                shape=self.shape,
+                transparent_background=self.transparent_background,
+            )
+            for response_dict in response['data']
+        ]
 
 
-class URLImage(AbstractImage):
-    def __init__(self, name, url, width=1024, height=1024, transparent_background=False, ):
-        super().__init__(
-            width=width,
-            height=height,
-            transparent_background=transparent_background,
-        )
-        self._url = url
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def url(self):
-        return self._url
+def make_player_image(noun):
+    return Image.for_prompt(prompt=f"Pixel art of a {noun} facing right",
+                            shape=ImageShape(32, 32), transparent_background=True)[0]
 
 
-# response = openai.Image.create_variation(
-#     image=open("corgi_and_cat_paw.png", "rb"),
-#     n=1,
-#     size="1024x1024"
-# )
-# image_url = response['data'][0]['url']
-
-
-class PlayerImage(Image):
-    def __init__(self, noun, width=32, height=32, transparent_background=True, ):
-        super().__init__(
-            f"Pixel art of a {noun} facing right",
-            width=width,
-            height=height,
-            transparent_background=transparent_background,
-        )
-
-
-class BackgroundImage(Image):
-    def __init__(self, noun, width, height, transparent_background=False, ):
-        super().__init__(
-            f"beautiful top down view video game art of {noun}",
-            width=width,
-            height=height,
-            transparent_background=transparent_background,
-        )
-
-
-if __name__ == "__main__":
-    image = BackgroundImage("volcano", 1024, 1024)
-    variation, = image.variations()
-    variation.download()
+def make_background_images(noun, width, height, n=1):
+    return Image.for_prompt(
+        prompt=f"beautiful top down view video game art of {noun}",
+        shape=ImageShape(width, height),
+        transparent_background=False,
+        n=n,
+    )

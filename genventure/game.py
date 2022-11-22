@@ -3,7 +3,7 @@ import logging
 import pygame
 from pygame.locals import *
 
-from genventure.image import PlayerImage, BackgroundImage
+from genventure.image import make_player_image
 from genventure.world import World
 
 logging.basicConfig(level=logging.INFO)
@@ -63,18 +63,11 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = None
 
-        self.player_image = PlayerImage(player_prompt)
+        self.player_image = make_player_image(player_prompt)
         if not self.player_image.exists():
             self.player_image.download()
 
-        self.background_image = BackgroundImage(
-            noun=background_prompt,
-            width=self.width,
-            height=self.height,
-        )
-        if not self.background_image.exists():
-            self.background_image.download()
-
+        self.background_prompt = background_prompt
 
     @property
     def shape(self):
@@ -83,7 +76,8 @@ class Game:
     def on_init(self):
         self._surface = pygame.display.set_mode(self.shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
-        self.player = Player(image_path=str(self.player_image.path), world=World(self.background_image, tile_shape=self.shape))
+        self.player = Player(image_path=str(self.player_image.path),
+                             world=World(self.background_prompt, tile_shape=self.shape))
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
