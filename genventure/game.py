@@ -87,10 +87,12 @@ class Game:
         self.player.update()
 
     def on_render(self):
-        background = pygame.image.load(
-            self.player.tile.image.path
-        )
-        self._surface.blit(background, (0, 0))
+        tile = self.player.tile
+        if tile is not None:
+            background = pygame.image.load(
+                self.player.tile.image.path
+            )
+            self._surface.blit(background, (0, 0))
         self.player.draw(self._surface)
         pygame.display.update()
 

@@ -141,7 +141,7 @@ class Image(LocalImage):
 
 def make_player_image(noun):
     return Image.for_prompt(prompt=f"Pixel art of a {noun} facing right",
-                            shape=ImageShape(32, 32), transparent_background=True)[0]
+                            shape=ImageShape(64, 64), transparent_background=True)[0]
 
 
 def background_prompt(noun):
