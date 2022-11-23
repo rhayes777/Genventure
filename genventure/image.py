@@ -55,6 +55,12 @@ class LocalImage:
     def exists(self):
         return self.path.exists()
 
+    def __del__(self):
+        try:
+            os.remove(self.path)
+        except FileNotFoundError:
+            pass
+
 
 class Image(LocalImage):
     def __init__(self, name, url, shape, transparent_background=False, ):
