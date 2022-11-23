@@ -4,7 +4,6 @@ import pygame
 from pygame.locals import *
 
 from genventure.image import make_player_image
-from genventure.world import World
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,12 +53,10 @@ class Player(pygame.sprite.Sprite):
 
 
 class Game:
-    def __init__(self, player_prompt, background_prompt):
+    def __init__(self, player_prompt, world):
         self._running = True
         self._surface = None
 
-        self.width = width
-        self.height = height
         self.clock = pygame.time.Clock()
         self.player = None
 
@@ -67,17 +64,13 @@ class Game:
         if not self.player_image.exists():
             self.player_image.download()
 
-        self.background_prompt = background_prompt
-
-    @property
-    def shape(self):
-        return self.width, self.height
+        self.world = world
 
     def on_init(self):
-        self._surface = pygame.display.set_mode(self.shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
+        self._surface = pygame.display.set_mode(self.world.tile_shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
         self.player = Player(image_path=str(self.player_image.path),
-                             world=World(self.background_prompt, tile_shape=self.shape))
+                             world=self.world)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -115,11 +108,3 @@ class Game:
             self.clock.tick(60)
 
         self.on_cleanup()
-
-
-if __name__ == "__main__":
-    app = Game(
-        player_prompt="queen",
-        background_prompt="heaven",
-    )
-    app.on_execute()

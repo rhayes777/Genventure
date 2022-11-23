@@ -1,26 +1,25 @@
 from genventure.game import Game
 from genventure.input import text_input
+from genventure.world import World
 
 
 class Orchestrator:
     def __init__(self):
-        self.player_prompt = None
-        self.environment_prompt = None
+        self.world = None
 
     def on_player_prompt(self, player_prompt):
-        self.player_prompt = player_prompt
-        text_input(self.on_environment_prompt)
-
-    def on_environment_prompt(self, environment_prompt):
-        self.environment_prompt = environment_prompt
         app = Game(
-            player_prompt=self.player_prompt,
-            background_prompt=self.environment_prompt,
+            player_prompt=player_prompt,
+            world=self.world,
         )
         app.on_execute()
 
-    def run(self):
+    def on_environment_prompt(self, environment_prompt):
+        self.world = World(background_prompt=environment_prompt, tile_shape=(1024, 1024))
         text_input(self.on_player_prompt)
+
+    def run(self):
+        text_input(self.on_environment_prompt)
 
 
 if __name__ == "__main__":
