@@ -107,7 +107,7 @@ class Image(LocalImage):
             cv2.imwrite(filename, dst)
 
     @classmethod
-    def for_prompt(cls, prompt, shape=None, n=1, transparent_background=False, name=None):
+    def for_prompt(cls, prompt, shape=None, n=1, transparent_background=False,):
         shape = shape or ImageShape(width=1024, height=1024)
         logger = logging.getLogger(prompt)
         logger.info("Querying API...")
@@ -119,7 +119,7 @@ class Image(LocalImage):
         logger.info("Query complete")
         return [
             Image(
-                name=name or prompt,
+                name=f"{prompt}_{uuid.uuid4()}",
                 url=data["url"],
                 shape=shape,
                 transparent_background=transparent_background
@@ -159,11 +159,10 @@ def background_prompt(noun):
     return f"beautiful top down view video game art of {noun}"
 
 
-def make_background_images(noun, width, height, n=1, name=None):
+def make_background_images(noun, width, height, n=1):
     return Image.for_prompt(
         prompt=background_prompt(noun),
         shape=ImageShape(width, height),
         transparent_background=False,
         n=n,
-        name=name,
     )

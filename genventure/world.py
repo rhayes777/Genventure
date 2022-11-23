@@ -1,5 +1,4 @@
 import math
-import uuid
 from queue import Queue
 from random import randint, choice
 from threading import Thread
@@ -67,7 +66,6 @@ class World:
             n=n
         )
         for image in images:
-            image.name = f"{self.noun}_{uuid.uuid4()}"
             image.download()
             self.image_queue.put(image)
 
