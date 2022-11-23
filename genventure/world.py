@@ -1,7 +1,9 @@
 import math
+import uuid
+from queue import Queue
 from threading import Thread
 
-from genventure.image import make_background_images, LocalImage, background_prompt
+from genventure.image import make_background_images
 
 
 class Tile:
@@ -15,46 +17,27 @@ class World:
         self.tile_shape = tile_shape
 
         self._tile_cache = {}
-        self.add_missing_tiles(item=(0, 0))
+        self.image_queue = Queue()
+        background_thread = Thread(target=self.add_to_queue, args=(3,))
+        background_thread.start()
 
-    def add_missing_tiles(self, item):
-        coordinates = [
-            (item[0] + x, item[1] + y)
-            for x in range(-1, 2)
-            for y in range(-1, 2)
-        ]
-        missing_coordinates = [
-            coordinate_pair
-            for coordinate_pair in coordinates
-            if coordinate_pair not in self._tile_cache
-        ]
-        for coordinate_pair in missing_coordinates:
-            self._tile_cache[coordinate_pair] = None
-
-        to_generate = []
-
-        for coordinate_pair in missing_coordinates:
-            name = f"{background_prompt(self.background_prompt)}_{'_'.join(map(str, coordinate_pair))}"
-            image = LocalImage(name)
-            if image.exists():
-                self._tile_cache[coordinate_pair] = image
-            else:
-                to_generate.append((name, coordinate_pair))
-            self._tile_cache[coordinate_pair] = Tile(image)
-
-        n = len(to_generate)
-
-        if n > 0:
-            images = make_background_images(noun=self.background_prompt, width=self.tile_shape[0],
-                                            height=self.tile_shape[1], n=n)
-            for (name, coordinate_pair), image in zip(to_generate, images):
-                image.name = name
-                image.download()
-                self._tile_cache[coordinate_pair] = Tile(image)
+    def add_to_queue(self, n=1):
+        images = make_background_images(
+            noun=self.background_prompt,
+            width=self.tile_shape[0],
+            height=self.tile_shape[1],
+            n=n
+        )
+        for image in images:
+            image.name = f"{self.background_prompt}_{uuid.uuid4()}"
+            image.download()
+            self.image_queue.put(image)
 
     def __getitem__(self, item):
-        background_thread = Thread(target=self.add_missing_tiles, args=(item,))
-        background_thread.start()
+        if item not in self._tile_cache:
+            background_thread = Thread(target=self.add_to_queue)
+            background_thread.start()
+            self._tile_cache[item] = Tile(self.image_queue.get())
         return self._tile_cache[item]
 
     def index(self, position):
