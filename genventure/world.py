@@ -1,35 +1,73 @@
 import math
 import uuid
 from queue import Queue
+from random import randint, choice
 from threading import Thread
 
-from genventure.image import make_background_images
+import pygame
+
+from genventure.image import make_background_images, make_flora_images
+
+
+class Flora(pygame.sprite.Sprite):
+    def __init__(self, image_path, x, y):
+        super().__init__()
+        self.is_left = True
+
+        self.image = pygame.image.load(image_path)
+
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
 
 
 class Tile:
-    def __init__(self, image):
+    def __init__(self, image, flora_images, shape):
         self.image = image
+        self.flora_images = flora_images
+        self.shape = shape
+
+        self.flora = [
+            Flora(
+                image_path=choice(self.flora_images).path,
+                x=randint(0, self.shape[0]),
+                y=randint(0, self.shape[1]),
+            )
+            for _ in range(randint(0, 30))
+        ]
 
 
 class World:
-    def __init__(self, background_prompt, tile_shape):
-        self.background_prompt = background_prompt
+    def __init__(self, noun, tile_shape):
+        self.noun = noun
         self.tile_shape = tile_shape
 
         self._tile_cache = {}
         self.image_queue = Queue()
+        self.flora_images = []
+
         background_thread = Thread(target=self.add_to_queue, args=(3,))
         background_thread.start()
 
+        flora_thread = Thread(target=self.generate_flora_images)
+        flora_thread.start()
+
+    def generate_flora_images(self, n=6):
+        self.flora_images = make_flora_images(n=n, noun=self.noun)
+        for image in self.flora_images:
+            image.download()
+
     def add_to_queue(self, n=1):
         images = make_background_images(
-            noun=self.background_prompt,
+            noun=self.noun,
             width=self.tile_shape[0],
             height=self.tile_shape[1],
             n=n
         )
         for image in images:
-            image.name = f"{self.background_prompt}_{uuid.uuid4()}"
+            image.name = f"{self.noun}_{uuid.uuid4()}"
             image.download()
             self.image_queue.put(image)
 
@@ -37,7 +75,11 @@ class World:
         if item not in self._tile_cache:
             background_thread = Thread(target=self.add_to_queue)
             background_thread.start()
-            self._tile_cache[item] = Tile(self.image_queue.get())
+            self._tile_cache[item] = Tile(
+                self.image_queue.get(),
+                flora_images=self.flora_images,
+                shape=self.tile_shape,
+            )
         return self._tile_cache[item]
 
     def index(self, position):

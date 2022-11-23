@@ -150,6 +150,11 @@ def make_player_image(noun):
                             shape=ImageShape(64, 64), transparent_background=True)[0]
 
 
+def make_flora_images(noun, n):
+    return Image.for_prompt(prompt=f"Pixel art of an object you would find in {noun}",
+                            shape=ImageShape(64, 64), transparent_background=True, n=n)
+
+
 def background_prompt(noun):
     return f"beautiful top down view video game art of {noun}"
 

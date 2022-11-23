@@ -89,6 +89,9 @@ class Game:
         else:
             self._surface.fill((255, 255, 255))
 
+        for fauna in tile.fauna:
+            fauna.draw(self._surface)
+
         self.player.draw(self._surface)
         pygame.display.update()
 

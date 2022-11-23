@@ -14,8 +14,8 @@ class Orchestrator:
         )
         app.on_execute()
 
-    def on_environment_prompt(self, environment_prompt):
-        self.world = World(background_prompt=environment_prompt, tile_shape=(1024, 1024))
+    def on_environment_prompt(self, noun):
+        self.world = World(noun=noun, tile_shape=(1024, 1024))
         text_input(self.on_player_prompt)
 
     def run(self):
