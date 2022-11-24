@@ -11,7 +11,6 @@ from genventure.image import make_background_images, make_flora_images
 class Flora(pygame.sprite.Sprite):
     def __init__(self, image_path, x, y):
         super().__init__()
-        self.is_left = True
 
         self.image = pygame.image.load(image_path)
 
