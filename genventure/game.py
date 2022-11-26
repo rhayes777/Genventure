@@ -1,4 +1,5 @@
 import logging
+from threading import Thread
 
 import pygame
 from pygame.locals import *
@@ -6,6 +7,8 @@ from pygame.locals import *
 from genventure.image import make_player_image
 
 logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 pygame.init()
 info = pygame.display.Info()
@@ -15,16 +18,32 @@ height = info.current_h
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, image_path, world):
+    def __init__(self, player_prompt, world):
         super().__init__()
+        image_thread = Thread(target=self.load_player_image, args=(player_prompt,))
+        image_thread.start()
+
         self.is_left = True
 
-        self.left_image = pygame.image.load(image_path)
-        self.right_image = pygame.transform.flip(self.left_image.copy(), True, False, )
-        self.rect = self.image.get_rect()
         self.position = [320, 200]
 
         self.world = world
+
+        self.player_image = None
+        self.left_image = None
+        self.right_image = None
+
+    def load_player_image(self, player_prompt):
+        self.player_image = make_player_image(player_prompt)
+        if not self.player_image.exists():
+            self.player_image.download()
+
+        image_path = str(self.player_image.path)
+
+        self.left_image = pygame.image.load(image_path)
+        self.right_image = pygame.transform.flip(self.left_image.copy(), True, False, )
+
+        self.rect = self.image.get_rect()
 
     @property
     def tile(self):
@@ -48,6 +67,9 @@ class Player(pygame.sprite.Sprite):
             self.is_left = False
 
     def draw(self, surface):
+        if self.image is None:
+            return 
+
         self.rect.center = self.world.tile_coordinate(self.position)
         surface.blit(self.image, self.rect)
 
@@ -60,17 +82,16 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = None
 
-        self.player_image = make_player_image(player_prompt)
-        if not self.player_image.exists():
-            self.player_image.download()
+        self.player = Player(
+            player_prompt,
+            world=world
+        )
 
         self.world = world
 
     def on_init(self):
         self._surface = pygame.display.set_mode(self.world.tile_shape, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
-        self.player = Player(image_path=str(self.player_image.path),
-                             world=self.world)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:

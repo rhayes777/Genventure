@@ -16,10 +16,10 @@ class Orchestrator:
 
     def on_environment_prompt(self, noun):
         self.world = World(noun=noun, tile_shape=(1024, 1024))
-        text_input(self.on_player_prompt)
+        text_input(self.on_player_prompt, "What are you?")
 
     def run(self):
-        text_input(self.on_environment_prompt)
+        text_input(self.on_environment_prompt, "Where are you?")
 
 
 if __name__ == "__main__":
