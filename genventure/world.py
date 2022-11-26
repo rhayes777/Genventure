@@ -8,6 +8,9 @@ import pygame
 from genventure.image import make_background_images, make_flora_images
 
 
+NUMBER_OF_TYPES_OF_FLORA = 10
+
+
 class Flora(pygame.sprite.Sprite):
     def __init__(self, image_path, x, y):
         super().__init__()
@@ -35,7 +38,7 @@ class Tile:
                     x=randint(0, self.shape[0]),
                     y=randint(0, self.shape[1]),
                 )
-                for _ in range(randint(0, 30))
+                for _ in range(randint(0, NUMBER_OF_TYPES_OF_FLORA))
             ]
 
 
@@ -54,7 +57,7 @@ class World:
         flora_thread = Thread(target=self.generate_flora_images)
         flora_thread.start()
 
-    def generate_flora_images(self, n=6):
+    def generate_flora_images(self, n=NUMBER_OF_TYPES_OF_FLORA):
         flora_images = make_flora_images(n=n, noun=self.noun)
         for image in flora_images:
             image.download()
